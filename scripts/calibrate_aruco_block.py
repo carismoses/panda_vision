@@ -200,7 +200,7 @@ def main():
 
         # open the info file for the block we just recognized
         try:
-            with open(f'block_{block_id}_info.pkl', 'rb') as f:
+            with open(f'../tags/block_{block_id}_info.pkl', 'rb') as f:
                 info = pickle.load(f)
         except FileNotFoundError:
             print(f'Failed to find the info file for block {block_id}.',
@@ -219,7 +219,7 @@ def main():
         pipeline.stop()
 
     # save the resulting calibration file
-    info_filename = f'block_{block_id}_info.pkl'
+    info_filename = f'../tags/block_{block_id}_info.pkl'
     with open(info_filename, 'wb') as f:
         pickle.dump(info, f)
 

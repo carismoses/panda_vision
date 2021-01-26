@@ -32,10 +32,11 @@ def get_all_blocks_info():
         json -- {block_id: block_info}
     """
     all_blocks_info = {}
-    for fname in os.listdir('.'):
+    folder_path = '../tags'
+    for fname in os.listdir(folder_path):
         if fname.endswith('info.pkl'):
             block_id = int(fname.split('_')[1])
-            with open(fname, 'rb') as f:
+            with open(folder_path + '/' + fname, 'rb') as f:
                 all_blocks_info[block_id] = pickle.load(f)
 
     return all_blocks_info

@@ -62,7 +62,7 @@ def generate_texture(block_id, block_dimensions):
 
         # save the image at the correct size (PPCM) to print
         pil_face_image = Image.fromarray(face_image)
-        pil_face_image.save(f'block_{block_id}_tag_{marker_id}.png', format='PNG', dpi=(dpi, dpi))
+        pil_face_image.save(f'../tags/block_{block_id}_tag_{marker_id}.png', format='PNG', dpi=(dpi, dpi))
 
         # add the marker size to the info dict
         info[marker_id] = { 'marker_size_cm': marker_size_cm }
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     info = generate_texture(args.block_id, args.dimensions)
-    info_filename = f'block_{args.block_id}_info.pkl'
+    info_filename = f'../tags/block_{args.block_id}_info.pkl'
     with open(info_filename, 'wb') as f:
         pickle.dump(info, f)
 
