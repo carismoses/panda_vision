@@ -17,7 +17,7 @@ We will use OpenCVs Aruco tags to localize the blocks with the Intel RealSenseD4
 
 Each object has six unique tags; this script generates those tags according to the given `block_id` and saves them in the `tags` folder. Each tag is saved as a PNG image with a black border. When printed on a regular printer at the default scale (set by the script), you can cut out the tag along the border and it will match the dimensions of each face on the block.
 
-Additionally, this script generates a block info file saved at `tags/block_[num]_info.pkl`. This stores things the size of the aruco tags on that block, and the dimensions of the block which are needed for calibration and pose estimation.
+Additionally, this script generates a block info file saved at `tags/block_[num]_info.pkl`. This stores things the size of the aruco tags on that block, and the dimensions of the block (in cm) which are needed for calibration and pose estimation.
 
 Run the script by
 

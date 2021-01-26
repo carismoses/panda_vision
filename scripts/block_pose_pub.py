@@ -31,13 +31,15 @@ class BlockPoseFake:
 
 def main():
     # setup the ros node
-    pub = rospy.Publisher('block_pose', NamedPose, queue_size=10)
+    pub_named_pose = rospy.Publisher('block_named_pose', NamedPose, queue_size=10)
+    pub_pose = rospy.Publisher('block_pose', PoseStamped, queue_size=10)
     rospy.init_node("block_pose_pub")
 
     def publish_callback(block_id, X_CO):
         # create a pose message
         p = PoseStamped()
         p.header.stamp = rospy.Time.now()
+        p.header.frame_id = 'base'
 
         # populate with the pose information
         R_CO, t_CO = pose_matrix_to_Rt(X_CO)
@@ -45,16 +47,16 @@ def main():
         p.pose.orientation = Quaternion(*rot_to_quat(R_CO))
 
         # and publish the named pose
-        pub.publish(NamedPose(str(block_id), p))
+        pub_named_pose.publish(NamedPose(str(block_id), p))
+        pub_pose.publish(p)
 
-    # bpe = BlockPoseEst(publish_callback)
-    bpe = BlockPoseFake(publish_callback)
+    bpe = BlockPoseEst(publish_callback)
 
     while not rospy.is_shutdown():
         bpe.step()
 
     bpe.close()
-    
+
 
 
 if __name__ == '__main__':
