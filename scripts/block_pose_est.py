@@ -32,10 +32,10 @@ def get_all_blocks_info():
         json -- {block_id: block_info}
     """
     all_blocks_info = {}
-    for fname in os.listdir('tags'):
+    for fname in os.listdir('.'):
         if fname.endswith('info.pkl'):
             block_id = int(fname.split('_')[1])
-            with open('tags/' + fname, 'rb') as f:
+            with open(fname, 'rb') as f:
                 all_blocks_info[block_id] = pickle.load(f)
 
     return all_blocks_info
@@ -91,7 +91,7 @@ def get_block_poses_in_camera_frame(ids, corners, all_blocks_info, color_image=N
         # pose of the tag in the camera frame
         X_CT = Rt_to_pose_matrix(cv2.Rodrigues(rvec)[0], tvec)
         # pose of the object in camera frame
-        print(block_id, tag_id)
+        #print(block_id, tag_id)
         try:
             X_TO = np.linalg.inv(marker_info["X_OT"])
         except KeyError:
@@ -126,7 +126,7 @@ class BlockPoseEst:
 
     def __init__(self, callback=None, vis=False, serial_number=None):
         self.callback = callback
-        self.vis = vis 
+        self.vis = vis
         self.all_blocks_info = get_all_blocks_info()
 
         # Configure depth and color streams
@@ -207,9 +207,9 @@ class BlockPoseEst:
 
 
 def main():
-    if len(rs.context().devices):
-        print('Could not find any Realsense Devices.')
-        sys.exit(1)
+    #if len(rs.context().devices):
+    #    print('Could not find any Realsense Devices.')
+    #    sys.exit(1)
     print('Listing available realsense devices...')
     for i, device in enumerate(rs.context().devices):
         serial_number = device.get_info(rs.camera_info.serial_number)
