@@ -19,12 +19,13 @@ dpi = ppcm*2.54
 def generate_texture(block_id, block_dimensions):
     info = {'block_id': block_id, 'dimensions': np.array(block_dimensions)}
     d_x, d_y, d_z = block_dimensions
-    face_dimensions_list = np.array([[d_y, d_z],
-                                     [d_y, d_z],
-                                     [d_x, d_z],
-                                     [d_x, d_z],
-                                     [d_x, d_y],
-                                     [d_x, d_y]])
+    face_dimensions_list = np.array([[d_y, d_z],  # +x
+                                     [d_y, d_z],  # -x
+                                     [d_x, d_z],  # +y
+                                     [d_x, d_z],  # -y
+                                     [d_x, d_y],  # +z
+                                     [d_x, d_y]]) # -z
+    face_name_list = ['+X', '-X', '+Y', '-Y', '+Z', '-Z']
     for i in range(6):
         # get the dimensions of the face
         face_dimensions_cm = face_dimensions_list[i] * 100
@@ -49,7 +50,7 @@ def generate_texture(block_id, block_dimensions):
         # org = (10, 10)
         font_scale = 2
         thickness = 2
-        text = str(block_id)
+        text = f'{face_name_list[i]} block={block_id}, tag={marker_id}'
         (x,y), baseline = cv2.getTextSize(text, font, font_scale, thickness)
         org = (10,10+y)
         face_image = cv2.putText(face_image, text, org, font,
