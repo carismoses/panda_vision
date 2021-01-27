@@ -1,3 +1,0 @@
-string name
-string camera_name
-geometry_msgs/PoseStamped pose

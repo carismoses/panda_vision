@@ -1,0 +1,2 @@
+string camera_id
+panda_vision/BlockPose block_pose

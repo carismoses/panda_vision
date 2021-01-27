@@ -8,7 +8,7 @@ import rospy
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
 import pyrealsense2 as rs
 
-from panda_vision.msg import NamedPose
+from panda_vision.msg import BlockPose, BlockCameraPose
 from block_pose_est import BlockPoseEst
 from rotation_util import *
 
@@ -30,10 +30,10 @@ class BlockPosePublisher:
             print(f'{i+1}. {serial_number}')
 
         # these dictionaries will hold all rospy Publishers where the keys are a string
-        # camera_ID_block_ID_namedpose and block_ID_camera_ID_pose 
-        # the topics they publish to will be of the same name
+        # camera_block_pose/camera_ID_block_ID_ and block_pose/block_ID_camera_ID
+        # the topics they publish to will be the same name
         self.pose_publishers = {}
-        self.namedpose_publishers = {}
+        self.camerapose_publishers = {}
 
         bpes = []
         for serial_number in self.active_serial_numbers:
@@ -42,17 +42,17 @@ class BlockPosePublisher:
 
     def publish_callback(self, block_id, camera_serial_no, X_CO):
         camera_id = camera_lookup[camera_serial_no]
-        prefix = str(block_id) + '-' + str(camera_id)
-        named_pose_topic = prefix + '_namedpose'
-        pose_topic = prefix + '_pose'
+        suffix = 'block_'+ str(block_id) + '_camera_' + str(camera_id)
+        camera_pose_topic = 'camera_block_pose/' + suffix
+        pose_topic = 'block_pose/' + suffix
         
-        if named_pose_topic not in self.namedpose_publishers:
-            namedpose_pub = rospy.Publisher(named_pose_topic, NamedPose, queue_size=10)
+        if camera_pose_topic not in self.camerapose_publishers:
+            camerapose_pub = rospy.Publisher(camera_pose_topic, BlockCameraPose, queue_size=10)
             pose_pub = rospy.Publisher(pose_topic, PoseStamped, queue_size=10)
-            self.namedpose_publishers[named_pose_topic] = namedpose_pub
+            self.camerapose_publishers[camera_pose_topic] = camerapose_pub
             self.pose_publishers[pose_topic] = pose_pub
         else:
-            namedpose_pub = self.namedpose_publishers[named_pose_topic]
+            camerapose_pub = self.camerapose_publishers[camera_pose_topic]
             pose_pub = self.pose_publishers[pose_topic]
             
         # create a pose message
@@ -65,8 +65,9 @@ class BlockPosePublisher:
         p.pose.position = Point(*t_CO)
         p.pose.orientation = Quaternion(*rot_to_quat(R_CO))
 
-        # and publish the named pose
-        pub_named_pose.publish(NamedPose(str(block_id), camera_id, p))
+        # and publish the camera pose
+        block_pose = BlockPose(str(block_id), p)
+        pub_camera_pose.publish(BlockCameraPose(camera_id, block_pose))
         pub_pose.publish(p)
 
     def run(self):
