@@ -58,7 +58,7 @@ class BlockPosePublisher:
         # create a pose message
         p = PoseStamped()
         p.header.stamp = rospy.Time.now()
-        p.header.frame_id = 'base'
+        p.header.frame_id = 'camera_color_optical_frame_'+camera_id
 
         # populate with the pose information
         R_CO, t_CO = pose_matrix_to_Rt(X_CO)
