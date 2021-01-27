@@ -3,8 +3,8 @@
 import rospy
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
 
-from aruco_vision.srv import GetBlockPoses, GetBlockPosesResponse
-from aruco_vision.msg import NamedPose
+from panda_vision.srv import GetBlockPoses, GetBlockPosesResponse
+from panda_vision.msg import NamedPose
 
 # NOTE(izzy): in order to be able to continuously collect frames from the
 # camera and also handle server requests, I've decided to have a publisher

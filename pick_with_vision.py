@@ -13,8 +13,8 @@ import geometry_msgs.msg
 from tf2_geometry_msgs import PoseStamped
 import pb_robot
 import numpy
-from aruco_vision.cal import dist, mtx
-from aruco_vision.rotation_util import *
+from panda_vision.cal import dist, mtx
+from panda_vision.rotation_util import *
 
 from pb_robot.panda import Panda
 

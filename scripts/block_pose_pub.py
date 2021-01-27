@@ -7,7 +7,7 @@ Izzybrand, 2020
 import rospy
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
 
-from aruco_vision.msg import NamedPose
+from panda_vision.msg import NamedPose
 from block_pose_est import BlockPoseEst
 from rotation_util import *
 
