@@ -5,6 +5,9 @@ Izzybrand, 2020
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+def quat_to_eul(q):
+    return Rotation.from_quat(q).as_euler('ZYX')
+
 def quat_to_rot(q):
     return Rotation.from_quat(q).as_matrix()
 
