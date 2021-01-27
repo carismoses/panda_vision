@@ -38,13 +38,32 @@ for i in range(num_blocks):
         if grippable:
             dims[i] = d
             break 
+# these dimensions are from the original block set. to generate new plywood blocks I had to 
+# limit the COM placement
+# dims = np.array([[ 7.  , 6. , 14.5]  ,
+# [13. ,  6.5 , 5.5]  ,
+# [6. , 6.5, 7. ] ,
+# [7.5 ,4.5 ,7. ]  ,
+# [ 5.5, 13.5 , 6.5]  ,
+# [ 4.5 ,14.,   6.5]  ,
+# [ 6.5  ,4. , 13. ]  ,
+# [ 5. ,  6.5, 12.5]  ,
+# [5.5, 6. , 6.5]  ,
+# [10.5 , 5. ,  4.5] ,
+# [ 5.5 ,14.5 , 6. ] ,
+# [10.5 , 5. ,  5. ] ,
+# [5. , 9.5, 6. ] ,
+# [ 5. ,  4. , 14.5]  ,
+# [4. , 8.5, 4.5] ,
+# [6.5 ,5. , 4. ] ])
 
 # generate the block coms (with uniform sampling)
 # coms = np.random.rand(num_blocks, 3)*(dims-com_border*2) - (dims/2) + com_border
-
+ball_radius = 1.25  # cm
+wall_thickness = 0.5 # cm
 # NOTE(izzy): blocks were uninteresting with uniform random COM. here's a different strategy:
 signed_coms = np.random.randint(-1,2, size=(num_blocks, 3))
-coms = signed_coms * (dims/2 - 2)
+coms = signed_coms * (dims/2 - ball_radius - wall_thickness*2)
 
 # plot the blocks
 grid_size = np.ceil(np.sqrt(num_blocks))

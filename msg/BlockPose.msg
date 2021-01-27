@@ -1,2 +1,2 @@
-string name
+string block_id
 geometry_msgs/PoseStamped pose

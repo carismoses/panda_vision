@@ -6,58 +6,80 @@ Izzybrand, 2020
 
 import rospy
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
+import pyrealsense2 as rs
 
-from aruco_vision.msg import NamedPose
+from panda_vision.msg import BlockPose, BlockCameraPose
 from block_pose_est import BlockPoseEst
 from rotation_util import *
 
+# map from camera serial no to camera ID
+camera_lookup = {032622074588:'A', 028522072401:'B'}
 
-import numpy as np
-class BlockPoseFake:
-    def __init__(self, callback):
-        self.callback = callback
+class BlockPosePublisher:
+    
+    def __init__(self):
+        # setup the ros node
+        rospy.init_node("block_pose_pub")
+        
+        # get active cameras to start publishing for
+        print('Listing available realsense devices...')
+        self.active_serial_numbers = []
+        for i, device in enumerate(rs.context().devices):
+            serial_number = device.get_info(rs.camera_info.serial_number)
+            self.active_serial_numbers.append(serial_number)
+            print(f'{i+1}. {serial_number}')
 
-    def step(self):
-        R = np.eye(3)
-        t = np.random.randn(3)
-        X = Rt_to_pose_matrix(R, t)
-        block_id = np.random.randint(10)
-        self.callback(block_id, X)
+        # these dictionaries will hold all rospy Publishers where the keys are a string
+        # camera_block_pose/camera_ID_block_ID_ and block_pose/block_ID_camera_ID
+        # the topics they publish to will be the same name
+        self.pose_publishers = {}
+        self.camerapose_publishers = {}
 
-    def close(self):
-        pass
+        bpes = []
+        for serial_number in self.active_serial_numbers:
+            bpe = BlockPoseEst(self.publish_callback, serial_number=serial_number)
+            bpes.append(bpe)
 
-
-
-def main():
-    # setup the ros node
-    pub_named_pose = rospy.Publisher('block_named_pose', NamedPose, queue_size=10)
-    pub_pose = rospy.Publisher('block_pose', PoseStamped, queue_size=10)
-    rospy.init_node("block_pose_pub")
-
-    def publish_callback(block_id, X_CO):
+    def publish_callback(self, block_id, camera_serial_no, X_CO):
+        camera_id = camera_lookup[camera_serial_no]
+        suffix = 'block_'+ str(block_id) + '_camera_' + str(camera_id)
+        camera_pose_topic = 'camera_block_pose/' + suffix
+        pose_topic = 'block_pose/' + suffix
+        
+        if camera_pose_topic not in self.camerapose_publishers:
+            camerapose_pub = rospy.Publisher(camera_pose_topic, BlockCameraPose, queue_size=10)
+            pose_pub = rospy.Publisher(pose_topic, PoseStamped, queue_size=10)
+            self.camerapose_publishers[camera_pose_topic] = camerapose_pub
+            self.pose_publishers[pose_topic] = pose_pub
+        else:
+            camerapose_pub = self.camerapose_publishers[camera_pose_topic]
+            pose_pub = self.pose_publishers[pose_topic]
+            
         # create a pose message
         p = PoseStamped()
         p.header.stamp = rospy.Time.now()
-        p.header.frame_id = 'base'
+        p.header.frame_id = 'camera_color_optical_frame_'+camera_id
 
         # populate with the pose information
         R_CO, t_CO = pose_matrix_to_Rt(X_CO)
         p.pose.position = Point(*t_CO)
         p.pose.orientation = Quaternion(*rot_to_quat(R_CO))
 
-        # and publish the named pose
-        pub_named_pose.publish(NamedPose(str(block_id), p))
+        # and publish the camera pose
+        block_pose = BlockPose(str(block_id), p)
+        pub_camera_pose.publish(BlockCameraPose(camera_id, block_pose))
         pub_pose.publish(p)
 
-    bpe = BlockPoseEst(publish_callback)
+    def run(self):
+        while not rospy.is_shutdown():
+            for bpe in bpes:
+                bpe.step()
 
-    while not rospy.is_shutdown():
-        bpe.step()
-
-    bpe.close()
+        for bpe in bpes:
+            bpe.close()
 
 
 
 if __name__ == '__main__':
-    main()
+    bpp = BlockPosePublisher()
+    bpp.run()

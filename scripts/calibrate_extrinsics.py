@@ -115,7 +115,7 @@ def load_rosbag_data(filename):
 if __name__ == '__main__':
     # X_BG, X_CO = get_synthetic_data(N=1000)
     print('Loading rosbag')
-    X_BG, X_CO = load_rosbag_data('aruco_vision/cal.bag')
+    X_BG, X_CO = load_rosbag_data('panda_vision/cal.bag')
     print(f'Got {X_BG.shape[0]} pairs.')
     dataset = TensorDataset(torch.Tensor(X_BG), torch.Tensor(X_CO))
     model = ExtrinsicsError()
