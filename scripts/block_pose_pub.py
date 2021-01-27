@@ -40,11 +40,9 @@ class BlockPosePublisher:
             bpe = BlockPoseEst(self.publish_callback, serial_number=serial_number)
             bpes.append(bpe)
 
-        #pub_named_pose = rospy.Publisher('block_named_pose', NamedPose, queue_size=10)
-        #pub_pose = rospy.Publisher('block_pose', PoseStamped, queue_size=10)
-
     def publish_callback(self, block_id, camera_serial_no, X_CO):
-        prefix = str(block_id) + '-' + str(camera_serial_no)
+        camera_id = camera_lookup[camera_serial_no]
+        prefix = str(block_id) + '-' + str(camera_id)
         named_pose_topic = prefix + '_namedpose'
         pose_topic = prefix + '_pose'
         
@@ -68,8 +66,7 @@ class BlockPosePublisher:
         p.pose.orientation = Quaternion(*rot_to_quat(R_CO))
 
         # and publish the named pose
-        serial_id = camera_lookup[camera_serial_no]
-        pub_named_pose.publish(NamedPose(str(block_id), serial_id, p))
+        pub_named_pose.publish(NamedPose(str(block_id), camera_id, p))
         pub_pose.publish(p)
 
     def run(self):
