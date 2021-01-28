@@ -13,14 +13,14 @@ from block_pose_est import BlockPoseEst
 from rotation_util import *
 
 # map from camera serial no to camera ID
-camera_lookup = {032622074588:'A', 028522072401:'B'}
+camera_lookup = {'032622074588':'A', '028522072401':'B'}
 
 class BlockPosePublisher:
-    
+
     def __init__(self):
         # setup the ros node
         rospy.init_node("block_pose_pub")
-        
+
         # get active cameras to start publishing for
         print('Listing available realsense devices...')
         self.active_serial_numbers = []
@@ -35,17 +35,17 @@ class BlockPosePublisher:
         self.pose_publishers = {}
         self.camerapose_publishers = {}
 
-        bpes = []
+        self.bpes = []
         for serial_number in self.active_serial_numbers:
             bpe = BlockPoseEst(self.publish_callback, serial_number=serial_number)
-            bpes.append(bpe)
+            self.bpes.append(bpe)
 
     def publish_callback(self, block_id, camera_serial_no, X_CO):
         camera_id = camera_lookup[camera_serial_no]
         suffix = 'block_'+ str(block_id) + '_camera_' + str(camera_id)
         camera_pose_topic = 'camera_block_pose/' + suffix
         pose_topic = 'block_pose/' + suffix
-        
+
         if camera_pose_topic not in self.camerapose_publishers:
             camerapose_pub = rospy.Publisher(camera_pose_topic, BlockCameraPose, queue_size=10)
             pose_pub = rospy.Publisher(pose_topic, PoseStamped, queue_size=10)
@@ -54,7 +54,7 @@ class BlockPosePublisher:
         else:
             camerapose_pub = self.camerapose_publishers[camera_pose_topic]
             pose_pub = self.pose_publishers[pose_topic]
-            
+
         # create a pose message
         p = PoseStamped()
         p.header.stamp = rospy.Time.now()
@@ -67,15 +67,15 @@ class BlockPosePublisher:
 
         # and publish the camera pose
         block_pose = BlockPose(str(block_id), p)
-        pub_camera_pose.publish(BlockCameraPose(camera_id, block_pose))
-        pub_pose.publish(p)
+        camerapose_pub.publish(BlockCameraPose(camera_id, block_pose))
+        pose_pub.publish(p)
 
     def run(self):
         while not rospy.is_shutdown():
-            for bpe in bpes:
+            for bpe in self.bpes:
                 bpe.step()
 
-        for bpe in bpes:
+        for bpe in self.bpes:
             bpe.close()
 
 
