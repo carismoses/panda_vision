@@ -122,6 +122,52 @@ def combine_block_poses(block_poses_in_camera_frame):
 
     return block_poses
 
+def pnp_block_poses(ids, corners, all_blocks_info, color_image=None):
+    block_id_to_corners = {}
+    corner_coeffs = np.array([[-1,1], [1, 1], [1, -1], [-1, -1]])/2
+
+    for i in range(0, ids.size):
+        # pull out the info corresponding to this block
+        tag_id = ids[i][0]
+        block_id = tag_id // 6
+        img_corners = corners[i][0]
+        try:
+            marker_info = all_blocks_info[block_id][tag_id]
+            # print(f'Detected {tag_id}, the {marker_info["name"]} face of block {block_id}')
+        except KeyError:
+            print(f'Failed to find the block info for {block_id}. Skipping.')
+            continue
+
+        try:
+            tag_length = marker_info["marker_size_cm"]/100. # in meters
+            X_OT = marker_info["X_OT"]
+        except KeyError:
+            print(f'Failed to find the calibration info for tag {tag_id} on block {block_id}! Skipping.')
+            continue
+
+        # create tag-frame poses of the corners
+        X_TCs = np.zeros([4,4,4])
+        X_TCs[:] = np.eye(4)
+        X_TCs[:, :2, 3] = tag_length * corner_coeffs
+
+        # and get the object frame poses
+        X_OCs = np.einsum('ij,njk->nik', X_OT, X_TCs)
+        obj_corners = X_OCs[:, :3, 3]
+
+        if block_id not in block_id_to_corners:
+            block_id_to_corners[block_id] = {'obj': obj_corners, 'img': img_corners}
+        else:
+            block_id_to_corners[block_id]['obj'] = np.vstack([block_id_to_corners[block_id]['obj'], obj_corners])
+            block_id_to_corners[block_id]['img'] = np.vstack([block_id_to_corners[block_id]['img'], img_corners])
+
+    block_poses = {}
+    for block_id, corners in block_id_to_corners.items():
+        print(corners['obj'].shape, corners['img'].shape)
+        _, rvec, tvec = cv2.solvePnP(corners['obj'], corners['img'], mtx, dist)
+        block_poses[block_id] = Rt_to_pose_matrix(cv2.Rodrigues(rvec)[0], tvec[:,0])
+
+    return block_poses
+
 
 class BlockPoseEst:
 
@@ -173,19 +219,23 @@ class BlockPoseEst:
 
         # if we've detected markers, then estimate their pose and draw frames
         if ids is not None:
-            # estimate the pose of the blocks (one for each visible tag)
-            tag_id_to_block_pose = \
-                get_block_poses_in_camera_frame(ids, corners, self.all_blocks_info)
+            # # estimate the pose of the blocks (one for each visible tag)
+            # tag_id_to_block_pose = \
+            #     get_block_poses_in_camera_frame(ids, corners, self.all_blocks_info)
 
-            # draw a block for each detected tag (to show disagreement)
-            # for tag_id in tag_id_to_block_pose.keys():
-            #     block_id = tag_id // 6
-            #     X_CO = tag_id_to_block_pose[tag_id]
-            #     dimensions = self.all_blocks_info[block_id]['dimensions']
-            #     draw_block(X_CO, dimensions, color_image)
 
-            # combine all the visible tags
-            block_id_to_block_pose = combine_block_poses(tag_id_to_block_pose)
+            # # draw a block for each detected tag (to show disagreement)
+            # # for tag_id in tag_id_to_block_pose.keys():
+            # #     block_id = tag_id // 6
+            # #     X_CO = tag_id_to_block_pose[tag_id]
+            # #     dimensions = self.all_blocks_info[block_id]['dimensions']
+            # #     draw_block(X_CO, dimensions, color_image)
+
+            # # combine all the visible tags
+            # block_id_to_block_pose = combine_block_poses(tag_id_to_block_pose)
+
+            block_id_to_block_pose = pnp_block_poses(ids, corners, self.all_blocks_info)
+
             for block_id in block_id_to_block_pose.keys():
                 X_CO = block_id_to_block_pose[block_id]
 
