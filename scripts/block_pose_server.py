@@ -35,14 +35,17 @@ class BlockPoseServer:
         self.block_poses = {}
 
     def handle_get_block_poses(self, req):
+        print('Processing service request...')
         # get camera block pose topics
         all_topics_and_types = rospy.get_published_topics()
         all_topics = [topic for topic, type in all_topics_and_types]
         camera_block_pose_topics = [topic for topic in all_topics if 'camera_block_pose' in topic]
 
         # subscribe to them
+        pose_subs = []
         for topic in camera_block_pose_topics:
             pose_sub = rospy.Subscriber(topic, BlockCameraPose, self.block_pose_callback)
+            pose_subs.append(pose_sub)
             self.block_poses[topic] = []
 
         # sleep to accumulate pose estimates
@@ -72,7 +75,6 @@ class BlockPoseServer:
             pose.pose.orientation = Quaternion(*quat)
             block_pose = BlockPose(block_id, pose)
             final_avg_poses.append(block_pose)
-        print('final poses', final_avg_poses)
 
         # publish poses
         for block_pose in final_avg_poses:
@@ -80,8 +82,8 @@ class BlockPoseServer:
             pub = rospy.Publisher(topic, PoseStamped, queue_size=10)
             pub.publish(block_pose.pose)
 
-        # flush out poses
-        # TODO: get errors when callback still running after block_poses is cleared
+        # flush out poses and unsubscribe to topics
+        [pose_sub.unregister() for pose_sub in pose_subs]
         self.block_poses = {}
         print('Server done estimating poses')
         return GetBlockPosesResponse(final_avg_poses)
