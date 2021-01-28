@@ -241,7 +241,7 @@ class BlockPoseEst:
 
                 # run the supplied callback
                 if self.callback is not None:
-                    self.callback(block_id, X_CO)
+                    self.callback(block_id, self.serial_number, X_CO)
 
                 # if the visualizer is turned on, draw the block
                 if self.vis:

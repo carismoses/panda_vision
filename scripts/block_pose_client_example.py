@@ -3,7 +3,7 @@
 import time
 
 import rospy
-from aruco_vision.srv import GetBlockPoses
+from panda_vision.srv import GetBlockPoses
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 from cv2 import aruco
 
-from cal import mtx, dist
+from scripts.cal import mtx, dist
 
 # Configure depth and color streams
 pipeline = rs.pipeline()
@@ -15,7 +15,7 @@ config = rs.config()
 #config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
 #config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 #config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
+config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
 
 # Start streaming
 pipeline.start(config)
@@ -41,12 +41,13 @@ try:
         # detect aruco markers
         corners, ids, rejectedImgPoints = aruco.detectMarkers(
             gray, aruco_dict, parameters=aruco_params)
+        aruco.drawDetectedMarkers(color_image, corners, ids)
 
         # if we've detected markers, then estimate their pose and draw frames
         if ids is not None:
             # NOTE(izzy): in the future we will need to look up the marker
             # length based on the marker id
-            marker_length = 0.056
+            marker_length = 0.054
             rvec, tvec ,_ = aruco.estimatePoseSingleMarkers(
                 corners, marker_length, mtx, dist)
             for i in range(0, ids.size):
@@ -54,7 +55,7 @@ try:
                 rmat, jacobian = cv2.Rodrigues(rvec[i])
                 print(rmat, tvec[i])
                 # draw axis for the aruco markers
-                aruco.drawAxis(color_image, mtx, dist, rvec[i], tvec[i], 0.05)
+                aruco.drawAxis(color_image, mtx, dist, rvec[i], tvec[i], 0.054)
 
             # color_image = aruco.drawDetectedMarkers(
             #     color_image.copy(), corners, ids)
