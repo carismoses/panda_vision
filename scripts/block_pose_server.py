@@ -4,6 +4,8 @@ import re
 import rospy
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 import numpy as np
+import tf2_ros
+import tf2_geometry_msgs
 
 from panda_vision.srv import GetBlockPoses, GetBlockPosesResponse
 from panda_vision.msg import BlockPose, BlockCameraPose
@@ -17,6 +19,12 @@ import rotation_util
 class BlockPoseServer:
     def __init__(self):
         rospy.init_node('block_pose_server')
+
+        # initialize tf buffer
+        self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) # tf buffer length
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+
+        # advertize server
         rospy.Service('get_block_poses', GetBlockPoses, self.handle_get_block_poses)
         print('Get block poses server ready.')
 
@@ -37,7 +45,7 @@ class BlockPoseServer:
             pose_sub = rospy.Subscriber(topic, BlockCameraPose, self.block_pose_callback)
             self.block_poses[topic] = []
 
-        # spin to accumulate pose estimates
+        # sleep to accumulate pose estimates
         rospy.sleep(self.sleep_time)
 
         # average poses over time and group by block id
@@ -59,8 +67,7 @@ class BlockPoseServer:
             R, trans = rotation_util.pose_matrix_to_Rt(avg_T)
             quat = rotation_util.rot_to_quat(R)
             pose = PoseStamped()
-            # TODO: need to transform poses into the same frame before averaging
-            #pose.header.frame_id = 'camera_color_optical_frame_' + str()
+            pose.header.frame_id = 'base'
             pose.pose.position = Point(*trans)
             pose.pose.orientation = Quaternion(*quat)
             block_pose = BlockPose(block_id, pose)
@@ -81,13 +88,22 @@ class BlockPoseServer:
 
     def block_pose_callback(self, data):
         topic = '/camera_block_pose/block_'+str(data.block_pose.block_id)+'_camera_'+str(data.camera_id)
-        trans = np.array([data.block_pose.pose.pose.position.x,
-                        data.block_pose.pose.pose.position.y,
-                        data.block_pose.pose.pose.position.z])
-        quat = np.array([data.block_pose.pose.pose.orientation.x,
-                        data.block_pose.pose.pose.orientation.y,
-                        data.block_pose.pose.pose.orientation.z,
-                        data.block_pose.pose.pose.orientation.w])
+        pose_stamped_camera_frame = data.block_pose.pose
+
+        # convert pose from camera frame to base frame (so can later average)
+        transform = self.tf_buffer.lookup_transform('base',
+                                pose_stamped_camera_frame.header.frame_id,
+                                rospy.Time(0),          # get first available tf
+                                rospy.Duration(0.5))    # wait for .5 sec
+        pose_stamped_base_frame = tf2_geometry_msgs.do_transform_pose(pose_stamped_camera_frame, transform)
+
+        trans = np.array([pose_stamped_base_frame.pose.position.x,
+                        pose_stamped_base_frame.pose.position.y,
+                        pose_stamped_base_frame.pose.position.z])
+        quat = np.array([pose_stamped_base_frame.pose.orientation.x,
+                        pose_stamped_base_frame.pose.orientation.y,
+                        pose_stamped_base_frame.pose.orientation.z,
+                        pose_stamped_base_frame.pose.orientation.w])
         R = rotation_util.quat_to_rot(quat)
         T = rotation_util.Rt_to_pose_matrix(R, trans)
         self.block_poses[topic].append(T)
