@@ -67,8 +67,8 @@ for i in range(num_blocks):
 # randomly set the blocks as far as they can be on certain axes. they are always at the edge
 # on the longest axis
 signed_coms = np.random.randint(-1,2, size=(num_blocks, 3))
-for i, d in enumerate(dims):
-    signed_coms[i, np.argmax(d)] = np.random.choice([-1,1])
+# for i, d in enumerate(dims):
+#     signed_coms[i, np.argmax(d)] = np.random.choice([-1,1])
 coms = signed_coms * (dims/2 - ball_radius - wall_thickness*2)
 
 # plot the blocks
