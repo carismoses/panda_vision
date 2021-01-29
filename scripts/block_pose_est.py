@@ -11,7 +11,6 @@ from cv2 import aruco
 import os
 import sys
 
-from cal import dist, mtx
 from rotation_util import *
 
 # create the aruco dictionary and default parameters
@@ -41,7 +40,7 @@ def get_all_blocks_info():
 
     return all_blocks_info
 
-def draw_block(X_CO, dimensions, color_image, draw_axis=True):
+def draw_block(X_CO, dimensions, color_image, intrinsics, draw_axis=True):
     """ Draw dots at the corners of the block at the specified camera-frame
     pose and with the given dimensions.
 
@@ -58,6 +57,8 @@ def draw_block(X_CO, dimensions, color_image, draw_axis=True):
     Side effects:
         Modifies color_image
     """
+    mtx, dist = intrinsics
+
     # get the translation from the COG to the box corner points
     t_OP = signed_corners * dimensions[None,:] / 2
     # and convert the corner points to camera frame
@@ -73,56 +74,58 @@ def draw_block(X_CO, dimensions, color_image, draw_axis=True):
         R_CO, t_CO = pose_matrix_to_Rt(X_CO)
         aruco.drawAxis(color_image, mtx, dist, R_CO, t_CO, dimensions.min()/2)
 
-def get_block_poses_in_camera_frame(ids, corners, all_blocks_info, color_image=None):
-    tag_id_to_block_pose = {}
-    for i in range(0, ids.size):
-        # pull out the info corresponding to this block
-        tag_id = ids[i][0]
-        block_id = tag_id // 6
-        try:
-            marker_info = all_blocks_info[block_id][tag_id]
-            # print(f'Detected {tag_id}, the {marker_info["name"]} face of block {block_id}')
-        except KeyError:
-            print(f'Failed to find the block info for {block_id}. Skipping.')
-            continue
-        # detect the aruco tag
-        marker_length = marker_info["marker_size_cm"]/100. # in meters
-        rvec, tvec ,_ = aruco.estimatePoseSingleMarkers(
-            corners[i], marker_length, mtx, dist)
-        # pose of the tag in the camera frame
-        X_CT = Rt_to_pose_matrix(cv2.Rodrigues(rvec)[0], tvec)
-        # pose of the object in camera frame
-        #print(block_id, tag_id)
-        try:
-            X_TO = np.linalg.inv(marker_info["X_OT"])
-        except KeyError:
-            print(f'Failed to find the calibration info for tag {tag_id} on block {block_id}! Skipping.')
-            continue
-        X_CO = X_CT @ X_TO
-        # # draw axis for the aruco markers
-        tag_id_to_block_pose[tag_id] = X_CO
+# def get_block_poses_in_camera_frame(ids, corners, all_blocks_info, color_image=None):
+#     tag_id_to_block_pose = {}
+#     for i in range(0, ids.size):
+#         # pull out the info corresponding to this block
+#         tag_id = ids[i][0]
+#         block_id = tag_id // 6
+#         try:
+#             marker_info = all_blocks_info[block_id][tag_id]
+#             # print(f'Detected {tag_id}, the {marker_info["name"]} face of block {block_id}')
+#         except KeyError:
+#             print(f'Failed to find the block info for {block_id}. Skipping.')
+#             continue
+#         # detect the aruco tag
+#         marker_length = marker_info["marker_size_cm"]/100. # in meters
+#         rvec, tvec ,_ = aruco.estimatePoseSingleMarkers(
+#             corners[i], marker_length, mtx, dist)
+#         # pose of the tag in the camera frame
+#         X_CT = Rt_to_pose_matrix(cv2.Rodrigues(rvec)[0], tvec)
+#         # pose of the object in camera frame
+#         #print(block_id, tag_id)
+#         try:
+#             X_TO = np.linalg.inv(marker_info["X_OT"])
+#         except KeyError:
+#             print(f'Failed to find the calibration info for tag {tag_id} on block {block_id}! Skipping.')
+#             continue
+#         X_CO = X_CT @ X_TO
+#         # # draw axis for the aruco markers
+#         tag_id_to_block_pose[tag_id] = X_CO
 
-        if color_image is not None:
-            aruco.drawAxis(color_image, mtx, dist, rvec, tvec, marker_length/2)
+#         if color_image is not None:
+#             aruco.drawAxis(color_image, mtx, dist, rvec, tvec, marker_length/2)
 
-    return tag_id_to_block_pose
+#     return tag_id_to_block_pose
 
-def combine_block_poses(block_poses_in_camera_frame):
-    # consolidate all the tags for each block into a list indexed by the block_id
-    block_poses = {}
-    for tag_id in block_poses_in_camera_frame.keys():
-        block_id = tag_id // 6
-        if block_id not in block_poses:
-            block_poses[block_id] = []
-        block_poses[block_id].append(block_poses_in_camera_frame[tag_id])
+# def combine_block_poses(block_poses_in_camera_frame):
+#     # consolidate all the tags for each block into a list indexed by the block_id
+#     block_poses = {}
+#     for tag_id in block_poses_in_camera_frame.keys():
+#         block_id = tag_id // 6
+#         if block_id not in block_poses:
+#             block_poses[block_id] = []
+#         block_poses[block_id].append(block_poses_in_camera_frame[tag_id])
 
-    for block_id in block_poses.keys():
-        poses = block_poses[block_id]
-        block_poses[block_id] = mean_pose(poses)
+#     for block_id in block_poses.keys():
+#         poses = block_poses[block_id]
+#         block_poses[block_id] = mean_pose(poses)
 
-    return block_poses
+#     return block_poses
 
-def pnp_block_poses(ids, corners, all_blocks_info, color_image=None):
+def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None):
+    mtx, dist = intrinsics
+
     block_id_to_corners = {}
     corner_coeffs = np.array([[-1,1], [1, 1], [1, -1], [-1, -1]])/2
 
@@ -168,10 +171,16 @@ def pnp_block_poses(ids, corners, all_blocks_info, color_image=None):
 
     return block_poses
 
+def rs_intrinsics_to_opencv_intrinsics(intr):
+    D = np.array(intr.coeffs)
+    K = np.array([[intr.fx, 0, intr.ppx],
+                  [0, intr.fy, intr.ppy],
+                  [0, 0, 1]])
+    return K, D
 
 class BlockPoseEst:
 
-    def __init__(self, callback=None, vis=False, serial_number=None):
+    def __init__(self, callback=None, vis=False, serial_number=None, intrinsics=None):
         self.callback = callback
         self.vis = vis
         self.all_blocks_info = get_all_blocks_info()
@@ -185,11 +194,21 @@ class BlockPoseEst:
         config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
 
         # Start streaming
-        self.pipeline.start(config)
+        pipeline_profile = self.pipeline.start(config)
 
-        # And get the device info
+        # get the device info
         self.serial_number = self.pipeline.get_active_profile().get_device().get_info(rs.camera_info.serial_number)
         print(f'Connected to {self.serial_number}')
+
+        # get the camera intrinsics
+        if intrinsics is None:
+            print('Using default intrinsics from camera.')
+            stream_profile = pipeline_profile.get_stream(rs.stream.color) # Fetch stream profile for depth stream
+            intr = stream_profile.as_video_stream_profile().get_intrinsics() # Downcast to video_stream_profile and fetch intrinsics
+            self.intrinsics = rs_intrinsics_to_opencv_intrinsics(intr)
+        else:
+            self.intrinsics = intrinsics
+
 
 
     def spin(self):
@@ -217,25 +236,10 @@ class BlockPoseEst:
         corners, ids, rejectedImgPoints = aruco.detectMarkers(
             gray_image, aruco_dict, parameters=aruco_params)
 
-        # if we've detected markers, then estimate their pose and draw frames
+        # if we've detected markers, then estimate the block pose and draw frames
         if ids is not None:
-            # # estimate the pose of the blocks (one for each visible tag)
-            # tag_id_to_block_pose = \
-            #     get_block_poses_in_camera_frame(ids, corners, self.all_blocks_info)
-
-
-            # # draw a block for each detected tag (to show disagreement)
-            # # for tag_id in tag_id_to_block_pose.keys():
-            # #     block_id = tag_id // 6
-            # #     X_CO = tag_id_to_block_pose[tag_id]
-            # #     dimensions = self.all_blocks_info[block_id]['dimensions']
-            # #     draw_block(X_CO, dimensions, color_image)
-
-            # # combine all the visible tags
-            # block_id_to_block_pose = combine_block_poses(tag_id_to_block_pose)
-
-            block_id_to_block_pose = pnp_block_poses(ids, corners, self.all_blocks_info)
-
+            block_id_to_block_pose = pnp_block_poses(ids, corners, self.all_blocks_info, self.intrinsics)
+            # for each block that detected
             for block_id in block_id_to_block_pose.keys():
                 X_CO = block_id_to_block_pose[block_id]
 
@@ -246,7 +250,7 @@ class BlockPoseEst:
                 # if the visualizer is turned on, draw the block
                 if self.vis:
                     dimensions = self.all_blocks_info[block_id]['dimensions']
-                    draw_block(X_CO, dimensions, color_image)
+                    draw_block(X_CO, dimensions, color_image, self.intrinsics)
 
         if self.vis:
             cv2.imshow('Aruco Frames', color_image)
