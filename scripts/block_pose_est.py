@@ -12,6 +12,7 @@ import os
 import sys
 
 from rotation_util import *
+from rs_util import *
 
 # create the aruco dictionary and default parameters
 aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
@@ -171,13 +172,6 @@ def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None)
 
     return block_poses
 
-def rs_intrinsics_to_opencv_intrinsics(intr):
-    D = np.array(intr.coeffs)
-    K = np.array([[intr.fx, 0, intr.ppx],
-                  [0, intr.fy, intr.ppy],
-                  [0, 0, 1]])
-    return K, D
-
 class BlockPoseEst:
 
     def __init__(self, callback=None, vis=False, serial_number=None, intrinsics=None):
@@ -197,15 +191,13 @@ class BlockPoseEst:
         pipeline_profile = self.pipeline.start(config)
 
         # get the device info
-        self.serial_number = self.pipeline.get_active_profile().get_device().get_info(rs.camera_info.serial_number)
+        self.serial_number = get_serial_number(pipeline_profile)
         print(f'Connected to {self.serial_number}')
 
         # get the camera intrinsics
         if intrinsics is None:
             print('Using default intrinsics from camera.')
-            stream_profile = pipeline_profile.get_stream(rs.stream.color) # Fetch stream profile for depth stream
-            intr = stream_profile.as_video_stream_profile().get_intrinsics() # Downcast to video_stream_profile and fetch intrinsics
-            self.intrinsics = rs_intrinsics_to_opencv_intrinsics(intr)
+            self.intrinsics = get_intrinsics(pipeline_profile)
         else:
             self.intrinsics = intrinsics
 
