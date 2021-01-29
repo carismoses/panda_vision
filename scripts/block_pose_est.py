@@ -67,7 +67,7 @@ def draw_block(X_CO, dimensions, color_image, draw_axis=True):
     # and draw them into the image
     for corner, image_pt in zip(signed_corners, image_points):
         color = np.array([1.0,0.0,0.7])*100 + (corner[2] > 0) * 155
-        cv2.circle(color_image, tuple(image_pt[0].astype(int)), 5, color, -1)
+        cv2.circle(color_image, tuple(image_pt[0].astype(int)), 2, color, -1)
 
     if draw_axis:
         R_CO, t_CO = pose_matrix_to_Rt(X_CO)
@@ -267,7 +267,7 @@ def main():
         print(f'{i+1}. {serial_number}')
 
 
-    def print_callback(block_id, X_CO):
+    def print_callback(block_id, serial_number, X_CO):
         R_CO, T_CO = pose_matrix_to_Rt(X_CO)
         print(f'{block_id} at {T_CO}')
 
