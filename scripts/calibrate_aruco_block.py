@@ -10,8 +10,8 @@ import cv2
 from cv2 import aruco
 import sys
 
-from cal import mtx, dist
 from rotation_util import *
+from rs import *
 
 # create the aruco dictionary and default parameters
 aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
@@ -118,7 +118,7 @@ def detect_block_id(pipeline):
 
     return block_id
 
-def detect_face(pipeline, face_info, info):
+def detect_face(pipeline, face_info, info, intrinsics):
     """ pull and display images from the pipeline until a single aruco tag is
     visible in the frame. At that point, compute the rotation of the tag in the
     expected frame of the object (specified in face_info['R_CO']). Then snap
@@ -132,6 +132,7 @@ def detect_face(pipeline, face_info, info):
     Side Effects:
         Adds fields to info
     """
+    mtx, dist = intrinsics
     tag_id = None
     while tag_id is None:
         # Wait for a coherent pair of frames: depth and color
@@ -189,7 +190,8 @@ def main():
     config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
     # Start streaming
-    pipeline.start(config)
+    pipeline_profile = pipeline.start(config)
+    intrinsics = get_intrinsics(pipeline_profile)
 
     try:
         # detect the block to be calibrated by having the user place the block
@@ -212,7 +214,7 @@ def main():
             print(f'Place the block with {face_info["face_toward_camera"]}',
                   f'toward the camera and {face_info["face_up"]} up')
             input('Press enter when ready')
-            detect_face(pipeline, face_info, info)
+            detect_face(pipeline, face_info, info, intrinsics)
 
     finally:
         # Stop streaming

@@ -13,7 +13,10 @@ import geometry_msgs.msg
 from tf2_geometry_msgs import PoseStamped
 import pb_robot
 import numpy
-from panda_vision.cal import dist, mtx
+
+# NOTE(izzy): should be using built in intrinsics from the camera unless
+# we need special intrinsics
+from panda_vision.cal import dist, mtx 
 from panda_vision.rotation_util import *
 
 from pb_robot.panda import Panda

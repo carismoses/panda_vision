@@ -24,21 +24,24 @@ def draw(dim, com, position, ax):
 
     ax.scatter(*com + position, color='r')
 
-num_blocks = 16
+num_blocks = 12
+min_block_size = 5
+max_gripper_size = 7
 max_block_size = 15
-com_border = 2 # how close the COM can be the edge of the block
+ball_radius = 1.25
+wall_thickness = 0.5
 
 # generate the block dimensions (in cm)
 dims = np.zeros([num_blocks, 3])
 
 for i in range(num_blocks):
-    while True: 
-        d = np.round((4+11*np.random.rand(3))*2)/2 
-        grippable = (d < 7.5).sum() >= 2
+    while True:
+        d = np.round((min_block_size+(max_block_size - min_block_size)*np.random.rand(3))*2)/2
+        grippable = (d <= max_gripper_size).sum() >= 2
         if grippable:
             dims[i] = d
-            break 
-# these dimensions are from the original block set. to generate new plywood blocks I had to 
+            break
+# these dimensions are from the original block set. to generate new plywood blocks I had to
 # limit the COM placement
 # dims = np.array([[ 7.  , 6. , 14.5]  ,
 # [13. ,  6.5 , 5.5]  ,
@@ -59,10 +62,13 @@ for i in range(num_blocks):
 
 # generate the block coms (with uniform sampling)
 # coms = np.random.rand(num_blocks, 3)*(dims-com_border*2) - (dims/2) + com_border
-ball_radius = 1.25  # cm
-wall_thickness = 0.5 # cm
+
 # NOTE(izzy): blocks were uninteresting with uniform random COM. here's a different strategy:
+# randomly set the blocks as far as they can be on certain axes. they are always at the edge
+# on the longest axis
 signed_coms = np.random.randint(-1,2, size=(num_blocks, 3))
+# for i, d in enumerate(dims):
+#     signed_coms[i, np.argmax(d)] = np.random.choice([-1,1])
 coms = signed_coms * (dims/2 - ball_radius - wall_thickness*2)
 
 # plot the blocks
