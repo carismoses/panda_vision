@@ -216,6 +216,8 @@ class BlockPoseEst:
         # detect aruco markers
         corners, ids, rejectedImgPoints = aruco.detectMarkers(
             gray_image, aruco_dict, parameters=aruco_params)
+        if self.vis:
+            aruco.drawDetectedMarkers(color_image, corners, ids)
 
         # if we've detected markers, then estimate their pose and draw frames
         if ids is not None:
@@ -267,7 +269,7 @@ def main():
         print(f'{i+1}. {serial_number}')
 
 
-    def print_callback(block_id, X_CO):
+    def print_callback(block_id, serial_number, X_CO):
         R_CO, T_CO = pose_matrix_to_Rt(X_CO)
         print(f'{block_id} at {T_CO}')
 
