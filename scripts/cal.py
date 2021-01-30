@@ -1,5 +1,24 @@
 import numpy as np
 
+def get_custom_intrinsics(camera_name):
+    if camera_name == 'A':
+        # Camera A: 1920 x 1080 Mike's Cal (camera_calibration ros)
+        mtx = np.array([[1342.451693 ,   0.        , 1005.799801],
+               [  0.        ,1339.678018, 545.304949],
+               [  0.        ,   0.        ,   1.        ]])
+
+        dist = np.array([[ 0.069644, -0.154332, -0.004702, 0.004893, 0.000000]])
+    elif camera_name == 'B':
+        # Camera B: 1920x1080 Realsense Defaults
+        mtx = np.array([[1377.68286132812 ,   0.        , 964.721923828125],
+             [  0.        ,1375.89331054688, 527.139770507812],
+             [  0.        ,   0.        ,   1.        ]])
+
+        dist = np.array([[ 0., 0.,  0., 0., 0.]])
+    else:
+        raise NotImplementedError()
+    return mtx, dist
+
 ########## 680x480 ##########
 
 # Camera A: 640x480 Izzy's Cal
@@ -42,11 +61,11 @@ import numpy as np
 ########## 1920x1080 ##########
 
 # Camera A: 1920x1080 Realsense Defaults
-mtx = np.array([[1364.81262207031 ,   0.        , 986.490234375],
-     [  0.        ,1364.20202636719, 563.088134765625],
-     [  0.        ,   0.        ,   1.        ]])
-
-dist = np.array([[ 0., 0.,  0., 0., 0.]])
+# mtx = np.array([[1364.81262207031 ,   0.        , 986.490234375],
+#      [  0.        ,1364.20202636719, 563.088134765625],
+#      [  0.        ,   0.        ,   1.        ]])
+#
+# dist = np.array([[ 0., 0.,  0., 0., 0.]])
 
 # Camera A: 1920 x 1080 Mike's Cal (camera_calibration ros)
 # mtx = np.array([[1342.451693 ,   0.        , 1005.799801],
@@ -54,3 +73,10 @@ dist = np.array([[ 0., 0.,  0., 0., 0.]])
 #        [  0.        ,   0.        ,   1.        ]])
 #
 # dist = np.array([[ 0.069644, -0.154332, -0.004702, 0.004893, 0.000000]])
+
+# Camera B: 1920x1080 Realsense Defaults
+# mtx = np.array([[1377.68286132812 ,   0.        , 964.721923828125],
+#      [  0.        ,1375.89331054688, 527.139770507812],
+#      [  0.        ,   0.        ,   1.        ]])
+#
+# dist = np.array([[ 0., 0.,  0., 0., 0.]])

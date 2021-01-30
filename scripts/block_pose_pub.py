@@ -11,6 +11,7 @@ import pyrealsense2 as rs
 from panda_vision.msg import BlockPose, BlockCameraPose
 from block_pose_est import BlockPoseEst
 from rotation_util import *
+from cal import get_custom_intrinsics
 
 # map from camera serial no to camera ID
 camera_lookup = {'032622074588':'A', '028522072401':'B'}
@@ -37,7 +38,9 @@ class BlockPosePublisher:
 
         self.bpes = []
         for serial_number in self.active_serial_numbers:
-            bpe = BlockPoseEst(self.publish_callback, serial_number=serial_number)
+            bpe = BlockPoseEst(self.publish_callback,
+                               serial_number=serial_number,
+                               intrinsics=get_custom_intrinsics(camera_lookup[serial_number]))
             self.bpes.append(bpe)
 
     def publish_callback(self, block_id, camera_serial_no, X_CO):

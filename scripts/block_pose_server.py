@@ -43,6 +43,7 @@ class BlockPoseServer:
 
         # subscribe to them
         pose_subs = []
+        self.block_poses = {}
         for topic in camera_block_pose_topics:
             pose_sub = rospy.Subscriber(topic, BlockCameraPose, self.block_pose_callback)
             pose_subs.append(pose_sub)
