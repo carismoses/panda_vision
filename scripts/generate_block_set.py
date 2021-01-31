@@ -80,3 +80,7 @@ for i, (d, c) in enumerate(zip(dims,coms)):
     draw(d, c, position, ax)
 
 plt.show()
+
+print('\nAnd here are commands you can copy/paste to generate the tags.')
+for i, d in enumerate(dims/100): 
+    print(f'python create_aruco_block.py {i} --dimensions {d[0]} {d[1]} {d[2]}') 
