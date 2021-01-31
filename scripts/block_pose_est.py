@@ -11,6 +11,7 @@ from cv2 import aruco
 import os
 import sys
 
+from cal import get_custom_intrinsics
 from rotation_util import *
 from rs_util import *
 
@@ -20,6 +21,8 @@ aruco_params =  aruco.DetectorParameters_create()
 
 # 8 x 3 matrix of -1, 1 to compute the corners of the blocks (used in draw_block)
 signed_corners = np.array([c for c in itertools.product([-1, 1], repeat=3)])
+
+camera_lookup = {'032622074588':'A', '028522072401':'B', '032622073024': ''}
 
 def get_all_blocks_info():
     """ load all the block info files from the tags/ folder
@@ -69,7 +72,7 @@ def draw_block(X_CO, dimensions, color_image, intrinsics, draw_axis=True):
     # and draw them into the image
     for corner, image_pt in zip(signed_corners, image_points):
         color = np.array([1.0,0.0,0.7])*100 + (corner[2] > 0) * 155
-        cv2.circle(color_image, tuple(image_pt[0].astype(int)), 2, color, -1)
+        cv2.circle(color_image, tuple(image_pt[0].astype(int)), 5, color, -1)
 
     if draw_axis:
         R_CO, t_CO = pose_matrix_to_Rt(X_CO)
@@ -103,10 +106,10 @@ def draw_block(X_CO, dimensions, color_image, intrinsics, draw_axis=True):
 #         X_CO = X_CT @ X_TO
 #         # # draw axis for the aruco markers
 #         tag_id_to_block_pose[tag_id] = X_CO
-
+#
 #         if color_image is not None:
 #             aruco.drawAxis(color_image, mtx, dist, rvec, tvec, marker_length/2)
-
+#
 #     return tag_id_to_block_pose
 
 # def combine_block_poses(block_poses_in_camera_frame):
@@ -117,19 +120,18 @@ def draw_block(X_CO, dimensions, color_image, intrinsics, draw_axis=True):
 #         if block_id not in block_poses:
 #             block_poses[block_id] = []
 #         block_poses[block_id].append(block_poses_in_camera_frame[tag_id])
-
+#
 #     for block_id in block_poses.keys():
 #         poses = block_poses[block_id]
 #         block_poses[block_id] = mean_pose(poses)
-
+#
 #     return block_poses
 
-def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None):
+def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None, min_tags=1):
     mtx, dist = intrinsics
 
     block_id_to_corners = {}
     corner_coeffs = np.array([[-1,1], [1, 1], [1, -1], [-1, -1]])/2
-
     for i in range(0, ids.size):
         # pull out the info corresponding to this block
         tag_id = ids[i][0]
@@ -167,10 +169,13 @@ def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None)
     block_poses = {}
     for block_id, corners in block_id_to_corners.items():
         print(corners['obj'].shape, corners['img'].shape)
+        if corners['img'].shape[0] < min_tags*4:
+            continue
         _, rvec, tvec = cv2.solvePnP(corners['obj'], corners['img'], mtx, dist)
         block_poses[block_id] = Rt_to_pose_matrix(cv2.Rodrigues(rvec)[0], tvec[:,0])
 
     return block_poses
+
 
 class BlockPoseEst:
 
@@ -190,7 +195,7 @@ class BlockPoseEst:
         # Start streaming
         pipeline_profile = self.pipeline.start(config)
 
-        # get the device info
+        # And get the device info
         self.serial_number = get_serial_number(pipeline_profile)
         print(f'Connected to {self.serial_number}')
 
@@ -200,8 +205,6 @@ class BlockPoseEst:
             self.intrinsics = get_intrinsics(pipeline_profile)
         else:
             self.intrinsics = intrinsics
-
-
 
     def spin(self):
         try:
@@ -227,11 +230,13 @@ class BlockPoseEst:
         # detect aruco markers
         corners, ids, rejectedImgPoints = aruco.detectMarkers(
             gray_image, aruco_dict, parameters=aruco_params)
+        if self.vis:
+            aruco.drawDetectedMarkers(color_image, corners, ids)
 
-        # if we've detected markers, then estimate the block pose and draw frames
+        # if we've detected markers, then estimate their pose and draw frames
         if ids is not None:
             block_id_to_block_pose = pnp_block_poses(ids, corners, self.all_blocks_info, self.intrinsics)
-            # for each block that detected
+
             for block_id in block_id_to_block_pose.keys():
                 X_CO = block_id_to_block_pose[block_id]
 
@@ -258,8 +263,10 @@ def main():
     #    print('Could not find any Realsense Devices.')
     #    sys.exit(1)
     print('Listing available realsense devices...')
+    serial_numbers = []
     for i, device in enumerate(rs.context().devices):
         serial_number = device.get_info(rs.camera_info.serial_number)
+        serial_numbers.append(serial_number)
         print(f'{i+1}. {serial_number}')
 
 
@@ -267,7 +274,10 @@ def main():
         R_CO, T_CO = pose_matrix_to_Rt(X_CO)
         print(f'{block_id} at {T_CO}')
 
-    bpe = BlockPoseEst(print_callback, vis=True)
+    bpe = BlockPoseEst(print_callback,
+                       vis=True,
+                       serial_number=serial_numbers[0],
+                       intrinsics=get_custom_intrinsics(camera_lookup[serial_numbers[0]]))
     bpe.spin()
 
 

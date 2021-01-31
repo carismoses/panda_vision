@@ -1,5 +1,32 @@
 import numpy as np
 
+def get_custom_intrinsics(camera_name):
+    if camera_name == 'A':
+        # Camera A: 1920 x 1080 Mike's Cal (camera_calibration ros)
+        mtx = np.array([[1342.451693 ,   0.        , 1005.799801],
+               [  0.        ,1339.678018, 545.304949],
+               [  0.        ,   0.        ,   1.        ]])
+
+        dist = np.array([[ 0.069644, -0.154332, -0.004702, 0.004893, 0.000000]])
+    elif camera_name == 'B':
+        # Camera B: 1920x1080 Mike's Cal (camera_calibration ros)
+        mtx = np.array([[1349.544501 ,   0.        , 974.411300],
+               [  0.        ,1348.501863, 530.852211],
+               [  0.        ,   0.        ,   1.        ]])
+
+        dist = np.array([[ 0.099147, -0.190634, 0.001793, 0.004096, 0.000000]])
+    elif camera_name == 'C':
+        # Camera C: 1920x1080 Mike's Cal (camera_calibration ros)
+        mtx = np.array([[1296.617377 ,   0.        , 1010.359942],
+              [  0.        ,1295.837058, 576.386493],
+              [  0.        ,   0.        ,   1.        ]])
+
+        dist = np.array([[0.104545, -0.148822, 0.000863, 0.003670, 0.000000]])
+        return None
+    else:
+        raise NotImplementedError()
+    return mtx, dist
+
 ########## 680x480 ##########
 
 # Camera A: 640x480 Izzy's Cal
@@ -42,11 +69,11 @@ import numpy as np
 ########## 1920x1080 ##########
 
 # Camera A: 1920x1080 Realsense Defaults
-mtx = np.array([[1364.81262207031 ,   0.        , 986.490234375],
-     [  0.        ,1364.20202636719, 563.088134765625],
-     [  0.        ,   0.        ,   1.        ]])
-
-dist = np.array([[ 0., 0.,  0., 0., 0.]])
+# mtx = np.array([[1364.81262207031 ,   0.        , 986.490234375],
+#      [  0.        ,1364.20202636719, 563.088134765625],
+#      [  0.        ,   0.        ,   1.        ]])
+#
+# dist = np.array([[ 0., 0.,  0., 0., 0.]])
 
 # Camera A: 1920 x 1080 Mike's Cal (camera_calibration ros)
 # mtx = np.array([[1342.451693 ,   0.        , 1005.799801],
@@ -54,3 +81,24 @@ dist = np.array([[ 0., 0.,  0., 0., 0.]])
 #        [  0.        ,   0.        ,   1.        ]])
 #
 # dist = np.array([[ 0.069644, -0.154332, -0.004702, 0.004893, 0.000000]])
+
+# Camera B: 1920x1080 Realsense Defaults
+# mtx = np.array([[1377.68286132812 ,   0.        , 964.721923828125],
+#      [  0.        ,1375.89331054688, 527.139770507812],
+#      [  0.        ,   0.        ,   1.        ]])
+#
+# dist = np.array([[ 0., 0.,  0., 0., 0.]])
+
+# Camera B: 1920x1080 Mike's Cal (camera_calibration ros)
+# mtx = np.array([[1349.544501 ,   0.        , 974.411300],
+#      [  0.        ,1348.501863, 530.852211],
+#      [  0.        ,   0.        ,   1.        ]])
+#
+# dist = np.array([[ 0.099147, -0.190634, 0.001793, 0.004096, 0.000000]])
+
+# Camera C: 1920x1080 Mike's Cal (camera_calibration ros)
+# mtx = np.array([[1296.617377 ,   0.        , 1010.359942],
+#      [  0.        ,1295.837058, 576.386493],
+#      [  0.        ,   0.        ,   1.        ]])
+#
+# dist = np.array([[0.104545 -0.148822 0.000863 0.003670 0.000000]])
