@@ -22,7 +22,8 @@ aruco_params =  aruco.DetectorParameters_create()
 # 8 x 3 matrix of -1, 1 to compute the corners of the blocks (used in draw_block)
 signed_corners = np.array([c for c in itertools.product([-1, 1], repeat=3)])
 
-camera_lookup = {'032622074588':'A', '028522072401':'B'}
+camera_lookup = {'032622074588':'A', '028522072401':'B', '032622073024': ''}
+
 def get_all_blocks_info():
     """ load all the block info files from the tags/ folder
 
@@ -126,7 +127,7 @@ def draw_block(X_CO, dimensions, color_image, intrinsics, draw_axis=True):
 #
 #     return block_poses
 
-def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None, min_tags=2):
+def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None, min_tags=1):
     mtx, dist = intrinsics
 
     block_id_to_corners = {}

@@ -57,7 +57,8 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  GetBlockPoses.srv
+  GetBlockPosesWorld.srv
+  GetBlockPosesWrist.srv
 )
 
 ## Generate actions in the 'action' folder

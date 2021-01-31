@@ -14,7 +14,7 @@ from rotation_util import *
 from cal import get_custom_intrinsics
 
 # map from camera serial no to camera ID
-camera_lookup = {'032622074588':'A', '028522072401':'B'}
+camera_lookup = {'032622074588':'A', '028522072401':'B', '032622073024': 'C'}
 
 class BlockPosePublisher:
 

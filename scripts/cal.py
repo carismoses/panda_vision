@@ -13,7 +13,7 @@ def get_custom_intrinsics(camera_name):
         mtx = np.array([[1349.544501 ,   0.        , 974.411300],
                [  0.        ,1348.501863, 530.852211],
                [  0.        ,   0.        ,   1.        ]])
-     
+
         dist = np.array([[ 0.099147, -0.190634, 0.001793, 0.004096, 0.000000]])
     elif camera_name == 'C':
         # Camera C: 1920x1080 Mike's Cal (camera_calibration ros)
@@ -22,7 +22,8 @@ def get_custom_intrinsics(camera_name):
               [  0.        ,   0.        ,   1.        ]])
 
         dist = np.array([[0.104545, -0.148822, 0.000863, 0.003670, 0.000000]])
-    else:         
+        return None
+    else:
         raise NotImplementedError()
     return mtx, dist
 

@@ -7,7 +7,7 @@ import numpy as np
 import tf2_ros
 import tf2_geometry_msgs
 
-from panda_vision.srv import GetBlockPoses, GetBlockPosesResponse
+from panda_vision.srv import GetBlockPosesWorld, GetBlockPosesWrist, GetBlockPosesWorldResponse, GetBlockPosesWristResponse
 from panda_vision.msg import BlockPose, BlockCameraPose
 import rotation_util
 
@@ -17,7 +17,7 @@ import rotation_util
 # the block_pose_server is a subscriber to that node
 
 class BlockPoseServer:
-    def __init__(self):
+    def __init__(self, world_camera_names, wrist_camera_names):
         rospy.init_node('block_pose_server')
 
         # initialize tf buffer
@@ -25,21 +25,36 @@ class BlockPoseServer:
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         # advertize server
-        rospy.Service('get_block_poses', GetBlockPoses, self.handle_get_block_poses)
+        rospy.Service('get_block_poses_world', GetBlockPosesWorld, self.handle_get_block_poses_world)
+        rospy.Service('get_block_poses_wrist', GetBlockPosesWrist, self.handle_get_block_poses_wrist)
+
+
         print('Get block poses server ready.')
 
-        # time to wait for pose estimates (sec)
-        self.sleep_time = 5
+        # Keep track of which cameras are where.
+        self.world_camera_names = world_camera_names
+        self.wrist_camera_names = wrist_camera_names
 
         # poses will accumulate here
         self.block_poses = {}
 
-    def handle_get_block_poses(self, req):
+    def handle_get_block_poses_world(self, req):
+        return GetBlockPosesWorldResponse(self.get_poses('world', 3))
+
+    def handle_get_block_poses_wrist(self, req):
+        return GetBlockPosesWristResponse(self.get_poses('wrist', 1))
+
+    def get_poses(self, camera_type, sleep_time):
         print('Processing service request...')
         # get camera block pose topics
         all_topics_and_types = rospy.get_published_topics()
         all_topics = [topic for topic, type in all_topics_and_types]
-        camera_block_pose_topics = [topic for topic in all_topics if 'camera_block_pose' in topic]
+
+        if camera_type == 'wrist':
+            valid_cameras = self.wrist_camera_names
+        else:
+            valid_cameras = self.world_camera_names
+        camera_block_pose_topics = [topic for topic in all_topics if ('camera_block_pose' in topic and topic[-1] in valid_cameras)]
 
         # subscribe to them
         pose_subs = []
@@ -50,13 +65,18 @@ class BlockPoseServer:
             self.block_poses[topic] = []
 
         # sleep to accumulate pose estimates
-        rospy.sleep(self.sleep_time)
+        rospy.sleep(sleep_time)
 
         # average poses over time and group by block id
         camera_block_avg_poses = {}
+        print(self.block_poses.keys())
         for topic, block_poses in self.block_poses.items():
             matches = re.match(r'(.*)/block_(.*)_camera_(.*)', topic)
             block_id = matches.group(2)
+            # Check if the block is no longer visible. Important for wrist camera.
+            if len(block_poses) == 0:
+                continue
+            print(block_id, len(block_poses))
             avg_pose = rotation_util.mean_pose(block_poses)
 
             if block_id in camera_block_avg_poses:
@@ -87,7 +107,7 @@ class BlockPoseServer:
         [pose_sub.unregister() for pose_sub in pose_subs]
         self.block_poses = {}
         print('Server done estimating poses')
-        return GetBlockPosesResponse(final_avg_poses)
+        return final_avg_poses
 
     def block_pose_callback(self, data):
         topic = '/camera_block_pose/block_'+str(data.block_pose.block_id)+'_camera_'+str(data.camera_id)
@@ -112,5 +132,6 @@ class BlockPoseServer:
         self.block_poses[topic].append(T)
 
 if __name__ == '__main__':
-    bps = BlockPoseServer()
+    bps = BlockPoseServer(world_camera_names=['A', 'B'],
+                          wrist_camera_names=['C'])
     rospy.spin()
