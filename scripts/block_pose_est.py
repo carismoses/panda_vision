@@ -10,6 +10,7 @@ import cv2
 from cv2 import aruco
 import os
 import sys
+import rospkg
 
 from cal import get_custom_intrinsics
 from rotation_util import *
@@ -35,7 +36,10 @@ def get_all_blocks_info():
         json -- {block_id: block_info}
     """
     all_blocks_info = {}
-    folder_path = '../tags'
+
+    rospack = rospkg.RosPack()
+    folder_path = rospack.get_path('panda_vision') + '/tags'
+    print(folder_path)
     for fname in os.listdir(folder_path):
         if fname.endswith('info.pkl'):
             block_id = int(fname.split('_')[1])
@@ -168,7 +172,7 @@ def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None,
 
     block_poses = {}
     for block_id, corners in block_id_to_corners.items():
-        print(corners['obj'].shape, corners['img'].shape)
+        #print(corners['obj'].shape, corners['img'].shape)
         if corners['img'].shape[0] < min_tags*4:
             continue
         _, rvec, tvec = cv2.solvePnP(corners['obj'], corners['img'], mtx, dist)

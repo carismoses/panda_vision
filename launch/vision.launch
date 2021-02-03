@@ -1,0 +1,8 @@
+<launch>
+    <node name="block_pose_pub" pkg="panda_vision" type="block_pose_pub.py" output="screen" />
+    <node name="block_pose_server" pkg="panda_vision" type="block_pose_server.py" output="screen" />
+
+    <include file="$(find panda_vision)/launch/calibrations/1_30_2021_daniilidis_camA_custom_intrinsics.launch" />
+    <include file="$(find panda_vision)/launch/calibrations/1_30_2021_daniilidis_camB_custom_intrinsics.launch" />
+    <include file="$(find panda_vision)/launch/calibrations/1_30_2021_daniilidis_camC_default_intrinsics.launch" />
+</launch>
