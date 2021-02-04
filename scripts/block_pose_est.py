@@ -23,7 +23,7 @@ aruco_params =  aruco.DetectorParameters_create()
 # 8 x 3 matrix of -1, 1 to compute the corners of the blocks (used in draw_block)
 signed_corners = np.array([c for c in itertools.product([-1, 1], repeat=3)])
 
-camera_lookup = {'032622074588':'A', '028522072401':'B', '032622073024': ''}
+camera_lookup = {'032622074588':'A', '028522072401':'B', '032622073024': 'C'}
 
 def get_all_blocks_info():
     """ load all the block info files from the tags/ folder
@@ -183,10 +183,11 @@ def pnp_block_poses(ids, corners, all_blocks_info, intrinsics, color_image=None,
 
 class BlockPoseEst:
 
-    def __init__(self, callback=None, vis=False, serial_number=None, intrinsics=None):
+    def __init__(self, callback=None, vis=False, serial_number=None, intrinsics=None, min_tags=1):
         self.callback = callback
         self.vis = vis
         self.all_blocks_info = get_all_blocks_info()
+        self.min_tags = min_tags
 
         # Configure depth and color streams
         self.pipeline = rs.pipeline()
@@ -239,7 +240,7 @@ class BlockPoseEst:
 
         # if we've detected markers, then estimate their pose and draw frames
         if ids is not None:
-            block_id_to_block_pose = pnp_block_poses(ids, corners, self.all_blocks_info, self.intrinsics)
+            block_id_to_block_pose = pnp_block_poses(ids, corners, self.all_blocks_info, self.intrinsics, min_tags=self.min_tags)
 
             for block_id in block_id_to_block_pose.keys():
                 X_CO = block_id_to_block_pose[block_id]
