@@ -76,7 +76,6 @@ class BlockPoseServer:
             # Check if the block is no longer visible. Important for wrist camera.
             if len(block_poses) == 0:
                 continue
-            print(block_id, len(block_poses))
             avg_pose = rotation_util.mean_pose(block_poses)
 
             if block_id in camera_block_avg_poses:

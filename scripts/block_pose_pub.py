@@ -38,9 +38,13 @@ class BlockPosePublisher:
 
         self.bpes = []
         for serial_number in self.active_serial_numbers:
+            min_tags = 1
+            if camera_lookup[serial_number] == 'C':
+                min_tags = 1
             bpe = BlockPoseEst(self.publish_callback,
                                serial_number=serial_number,
-                               intrinsics=get_custom_intrinsics(camera_lookup[serial_number]))
+                               intrinsics=get_custom_intrinsics(camera_lookup[serial_number]),
+                               min_tags=min_tags)
             self.bpes.append(bpe)
 
     def publish_callback(self, block_id, camera_serial_no, X_CO):
