@@ -2,6 +2,9 @@
   <!-- The rpy in the comment uses the extrinsic XYZ convention, which is the same as is used in a URDF. See
        http://wiki.ros.org/geometry2/RotationMethods and https://en.wikipedia.org/wiki/Euler_angles for more info. -->
   <!-- xyz="0.104982 -0.0233021 -0.00811567" rpy="3.12327 -2.71877 -1.51719" -->
+  <!-- node pkg="tf2_ros" type="static_transform_publisher" name="camera_link_broadcaster"
+      args="0.104982 -0.0233021 -0.00811567   -0.158458 -0.137844 0.710937 0.671162 panda_hand camera_color_optical_frame_C" /-->
+  <!-- Hand Tuned Below -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="camera_link_broadcaster"
-      args="0.104982 -0.0233021 -0.00811567   -0.158458 -0.137844 0.710937 0.671162 panda_hand camera_color_optical_frame_C" />
+      args="0.109982 -0.0233021 -0.01011567 -0.158458 -0.137844 0.710937 0.671162 panda_hand camera_color_optical_frame_C" />
 </launch>
