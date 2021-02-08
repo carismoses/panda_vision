@@ -4,13 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from itertools import product, combinations
 
+density_of_wood = 0.68 # g/cm^3
+density_of_lead = 11.35 # g/cm^3
+wall_thickness = 0.49 # cm
+ball_radius = 1.25 # cm
+
+def compute_mass(dim, com):
+    ball_mass = 4/3*np.pi*ball_radius**3 * density_of_lead
+    box_mass = (np.prod(dim) - np.prod(dim - wall_thickness*2)) * density_of_wood
+    total_mass = box_mass + ball_mass
+    return total_mass
 
 def compute_real_com(dim, com):
-    density_of_wood = 0.68 # g/cm^3
-    density_of_lead = 11.35 # g/cm^3
-    wall_thickness = 0.49 # cm
-    ball_radius = 1.25 # cm
-
     ball_mass = 4/3*np.pi*ball_radius**3 * density_of_lead
     box_mass = (np.prod(dim) - np.prod(dim - wall_thickness*2)) * density_of_wood
     total_mass = box_mass + ball_mass
@@ -37,7 +42,16 @@ def draw(dim, com, position, ax):
 
     ax.scatter(*com + position, color='r')
 
+def generate_csv(dims, coms, filename):
+    import csv
+    with open(filename, mode='w') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
+        writer.writerow(['Block ID', 'Dimensions', 'COM', 'Mass'])        
+        for i, (d, c) in enumerate(zip(dims,coms)):
+            true_com = compute_real_com(d, c)
+            mass = compute_mass(d, c)
+            writer.writerow([i, d, true_com, mass])        
 
 if __name__ == '__main__':
 
@@ -49,6 +63,11 @@ if __name__ == '__main__':
     # ax.set_ylim(-10,100)
     # ax.set_zlim(-10, 100)
 
+    # set True if you want to generate a csv file of these blocks
+    # then use in stacking/learning/domains/towers/create_block_set_file to generate
+    # block set pickle file
+    gen_csv = False 
+    filename = 'eval_block_set_12.csv'
 
     num_blocks = 12
     min_block_size = 5
@@ -79,6 +98,9 @@ if __name__ == '__main__':
     # for i, d in enumerate(dims):
     #     signed_coms[i, np.argmax(d)] = np.random.choice([-1,1])
     coms = signed_coms * (dims/2 - ball_radius - wall_thickness*2)
+
+    if gen_csv:
+        generate_csv(dims, coms, filename)
 
     # plot the blocks
     grid_size = np.ceil(np.sqrt(num_blocks))
