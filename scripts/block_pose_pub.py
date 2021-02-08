@@ -78,9 +78,11 @@ class BlockPosePublisher:
         pose_pub.publish(p)
 
     def run(self):
+        rate = rospy.Rate(5)
         while not rospy.is_shutdown():
             for bpe in self.bpes:
                 bpe.step()
+            rate.sleep()
 
         for bpe in self.bpes:
             bpe.close()
