@@ -47,25 +47,36 @@ class BlockPoseServer:
     def handle_get_grasp_pose(self,  req):
         return GetGraspPoseResponse(self.get_grasp_pose())
 
-    def get_poses(self, camera_type, sleep_time):
-        print('Processing service request...')
+    def start_camera_subs(self, camera_type):
         # get camera block pose topics
-        all_topics_and_types = rospy.get_published_topics()
-        all_topics = [topic for topic, type in all_topics_and_types]
-
         if camera_type == 'wrist':
             valid_cameras = self.wrist_camera_names
         else:
             valid_cameras = self.world_camera_names
-        camera_block_pose_topics = [topic for topic in all_topics if ('camera_block_pose' in topic and topic[-1] in valid_cameras)]
+
+        camera_block_pose_topics = [topic for topic, _ in rospy.get_published_topics() \
+            if ('camera_block_pose' in topic and topic[-1] in valid_cameras)]
 
         # subscribe to them
-        pose_subs = []
+        self.pose_subs = []
         self.block_poses = {}
         for topic in camera_block_pose_topics:
             pose_sub = rospy.Subscriber(topic, BlockCameraPose, self.block_pose_callback)
-            pose_subs.append(pose_sub)
+            self.pose_subs.append(pose_sub)
             self.block_poses[topic] = []
+
+    def stop_camera_subs(self):
+        for pose_sub in self.pose_subs:
+            pose_sub.unregister()
+
+        self.pose_subs = []
+        self.block_poses = {}
+
+    def get_poses(self, camera_type, sleep_time):
+        print('Processing service request...')
+
+        # start listening to the cameras
+        self.start_camera_subs(camera_type)
 
         # sleep to accumulate pose estimates
         rospy.sleep(sleep_time)
@@ -106,17 +117,22 @@ class BlockPoseServer:
             pub.publish(block_pose.pose)
 
         # flush out poses and unsubscribe to topics
-        [pose_sub.unregister() for pose_sub in pose_subs]
-        self.block_poses = {}
+        self.stop_camera_subs()
         print('Server done estimating poses')
         return final_avg_poses
 
     def get_grasp_pose(self):
-        """ Estimate the pose of the block currently held by the gripper
-        """
+        # Estimates the pose of the block currently held by the gripper
+
+        # start listening to the cameras
+        self.start_camera_subs('world')
+
         block_id = 0
         pose = PoseStamped()
         block_pose = BlockPose(block_id, pose)
+
+        # flush out poses and unsubscribe to topics
+        self.stop_camera_subs()
         return block_pose
 
     def block_pose_callback(self, data):
