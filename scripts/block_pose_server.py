@@ -44,6 +44,9 @@ class BlockPoseServer:
     def handle_get_block_poses_wrist(self, req):
         return GetBlockPosesWristResponse(self.get_poses('wrist', 1))
 
+    def handle_get_grasp_pose(self,  req):
+        return GetGraspPoseResponse(self.get_grasp_pose())
+
     def get_poses(self, camera_type, sleep_time):
         print('Processing service request...')
         # get camera block pose topics
@@ -107,6 +110,14 @@ class BlockPoseServer:
         self.block_poses = {}
         print('Server done estimating poses')
         return final_avg_poses
+
+    def get_grasp_pose(self):
+        """ Estimate the pose of the block currently held by the gripper
+        """
+        block_id = 0
+        pose = PoseStamped()
+        block_pose = BlockPose(block_id, pose)
+        return block_pose
 
     def block_pose_callback(self, data):
         topic = '/camera_block_pose/block_'+str(data.block_pose.block_id)+'_camera_'+str(data.camera_id)
