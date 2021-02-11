@@ -4,5 +4,5 @@
 
     <include file="$(find panda_vision)/launch/calibrations/1_30_2021_daniilidis_camA_custom_intrinsics.launch" />
     <include file="$(find panda_vision)/launch/calibrations/1_30_2021_daniilidis_camB_custom_intrinsics.launch" />
-    <include file="$(find panda_vision)/launch/calibrations/2_3_2021_daniilidis_camC_default_intrinsics.launch" />
+    <include file="$(find panda_vision)/launch/calibrations/2_10_2021_daniilidis_camC_default_intrinsics.launch" />
 </launch>

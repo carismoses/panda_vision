@@ -11,7 +11,7 @@ from cv2 import aruco
 import sys
 
 from rotation_util import *
-from rs import *
+from rs_util import *
 
 # create the aruco dictionary and default parameters
 aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
