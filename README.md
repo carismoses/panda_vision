@@ -13,7 +13,7 @@ We will use OpenCVs Aruco tags to localize the blocks with the Intel RealSenseD4
 `python calibrate_intinsics.py`
 `python calibrate_extrinsics.py`
 
-## Creating Tags for an object
+## Creating AR Tags for an object
 
 Each object has six unique tags; this script generates those tags according to the given `block_id` and saves them in the `tags` folder. Each tag is saved as a PNG image with a black border. When printed on a regular printer at the default scale (set by the script), you can cut out the tag along the border and it will match the dimensions of each face on the block.
 
@@ -22,6 +22,19 @@ Additionally, this script generates a block info file saved at `tags/block_[num]
 Run the script by
 
 `python create_aruco_block.py [block_id] [--dimensions dx dy dz]`
+
+Print out the resulting tags, cut along the black borders, and apply the block with tape or glue. It does not matter which face the tag is applied to as long as the shape matches.
+
+## Creating color tags for an object
+
+Each object has six unique tags (each a different color); this script generates those tags according to the given `block_id` and saves them in the `color_tags` folder. Each tag is saved as a PNG image with a black border. When printed on a regular printer at the default scale (set by the script), you can cut out the tag along the border and it will match the dimensions of each face on the block.
+
+The face colors correspond to the following dimensions:
+ [+X: red, -X: cyan, +Y: green, -Y: yellow, +Z: blue, -Z: magenta]
+
+Run the script by
+
+`python create_color_block.py [block_id] [--dimensions dx dy dz]`
 
 Print out the resulting tags, cut along the black borders, and apply the block with tape or glue. It does not matter which face the tag is applied to as long as the shape matches.
 
