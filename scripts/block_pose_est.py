@@ -15,6 +15,7 @@ import rospkg
 from cal import get_custom_intrinsics
 from rotation_util import *
 from rs_util import *
+from rcta_perception_msgs.msgs import DetectedObjectArray
 
 # create the aruco dictionary and default parameters
 aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
@@ -262,6 +263,28 @@ class BlockPoseEst:
     def close(self):
         self.pipeline.stop()
 
+
+class BlockPoseEst:
+
+    def __init__(self, callback=None, vis=False, serial_number=None, intrinsics=None, min_tags=1):
+        self.callback = callback
+
+        camera_names = ['camera_A', 'camera_B', 'camera_C']
+        pose_topics = ['/%s/static_object_detection' % camera_name for camera_name in camera_names]
+        det_subs = [rospy.Subscriber(topic, DetectedObjectArray, self.detection_callback)
+
+        # TODO: Do we need to set camera params? (intrinsics, resolution, etc...)
+
+    def detection_callback(self, data):
+        detections = data.objects
+        for detection in detections:
+            block_id = detection.classification.type.name
+            pose_frame_id = detection.pose.header.frame_id
+            for camera_serial_no, camera_name in camera_lookup.items():
+                if camera_name in frame_id:
+                    serial_no = camera_serial_no
+        pose = detection.pose.pose
+        self.callback(block_id, serial_no, pose)
 
 def main():
     #if len(rs.context().devices):
