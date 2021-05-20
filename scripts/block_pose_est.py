@@ -271,7 +271,7 @@ class BlockPoseEst:
 
         camera_names = ['camera_A', 'camera_B', 'camera_C']
         pose_topics = ['/%s/static_object_detection' % camera_name for camera_name in camera_names]
-        det_subs = [rospy.Subscriber(topic, DetectedObjectArray, self.detection_callback)
+        det_subs = [rospy.Subscriber(topic, DetectedObjectArray, self.detection_callback) for topic in pose_topics]
 
         # TODO: Do we need to set camera params? (intrinsics, resolution, etc...)
 
