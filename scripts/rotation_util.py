@@ -3,6 +3,7 @@
 Izzybrand, 2020
 """
 import numpy as np
+import tf.transformations as tr
 from scipy.spatial.transform import Rotation
 
 def quat_to_eul(q):
@@ -99,3 +100,22 @@ def mean_pose(poses):
     R_mean = Rotation.from_matrix(Rs).mean().as_matrix()
     T_mean = Ts.mean(axis=0)
     return Rt_to_pose_matrix(R_mean, T_mean)
+
+
+def ros_pose_to_matrix(pose):
+    """
+    Converts a ROS geometry_msgs/Pose message to a 4x4 matrix
+
+    Arguments:
+        poses {geometry_msgs.msg.Pose} -- ROS Pose message
+
+    Returns:
+        np.ndarray -- 4x4 pose matrix
+
+    """
+    T = tr.concatenate_matrices(
+        tr.translation_matrix([pose.position.x, pose.position.y, pose.position.z]),
+        tr.quaternion_matrix([pose.orientation.x, pose.orientation.y,
+                              pose.orientation.z, pose.orientation.w])
+    )
+    return T

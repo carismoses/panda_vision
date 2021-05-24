@@ -36,14 +36,14 @@ class BlockPosePublisher:
         self.pose_publishers = {}
         self.camerapose_publishers = {}
 
-        use_ar_tags = rospy.get_param('~use_ar_tags', True)
+        self.use_ar_tags = rospy.get_param('~use_ar_tags', True)
 
         self.bpes = []
         for serial_number in self.active_serial_numbers:
             min_tags = 1
             if camera_lookup[serial_number] == 'C':
                 min_tags = 1
-            if use_ar_tags:
+            if self.use_ar_tags:
                 bpe = BlockPoseEst(self.publish_callback,
                                 serial_number=serial_number,
                                 intrinsics=get_custom_intrinsics(camera_lookup[serial_number]),
@@ -51,6 +51,7 @@ class BlockPosePublisher:
             else:
                 bpe = BlockPoseEstPenn(self.publish_callback,
                                 serial_number=serial_number,
+                                camera_letter=camera_lookup[serial_number],
                                 intrinsics=get_custom_intrinsics(camera_lookup[serial_number]),
                                 min_tags=min_tags)
             self.bpes.append(bpe)
@@ -99,4 +100,7 @@ class BlockPosePublisher:
 
 if __name__ == '__main__':
     bpp = BlockPosePublisher()
-    bpp.run()
+    if bpp.use_ar_tags:
+        bpp.run()
+    else:
+        rospy.spin()

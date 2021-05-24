@@ -11,11 +11,12 @@ from cv2 import aruco
 import os
 import sys
 import rospkg
+import rospy
 
 from cal import get_custom_intrinsics
 from rotation_util import *
 from rs_util import *
-from rcta_perception_msgs.msgs import DetectedObjectArray
+from rcta_perception_msgs.msg import DetectedObjectArray
 
 # create the aruco dictionary and default parameters
 aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
@@ -264,14 +265,15 @@ class BlockPoseEst:
         self.pipeline.stop()
 
 
-class BlockPoseEst:
+class BlockPoseEstPenn:
 
-    def __init__(self, callback=None, vis=False, serial_number=None, intrinsics=None, min_tags=1):
+    def __init__(self, callback=None, vis=False, serial_number=None, camera_letter=None, intrinsics=None, min_tags=1):
         self.callback = callback
 
-        camera_names = ['camera_A', 'camera_B', 'camera_C']
-        pose_topics = ['/%s/static_object_detection' % camera_name for camera_name in camera_names]
-        det_subs = [rospy.Subscriber(topic, DetectedObjectArray, self.detection_callback) for topic in pose_topics]
+        camera_name = 'camera_%s' % camera_letter
+        det_sub = rospy.Subscriber('%s/static_object_detections' % camera_name,
+                                    DetectedObjectArray,
+                                    self.detection_callback)
 
         # TODO: Do we need to set camera params? (intrinsics, resolution, etc...)
 
@@ -281,10 +283,11 @@ class BlockPoseEst:
             block_id = detection.classification.type.name
             pose_frame_id = detection.pose.header.frame_id
             for camera_serial_no, camera_name in camera_lookup.items():
-                if camera_name in frame_id:
+                if camera_name in pose_frame_id:
                     serial_no = camera_serial_no
-        pose = detection.pose.pose
-        self.callback(block_id, serial_no, pose)
+            X_CO = ros_pose_to_matrix(detection.pose.pose)
+            print('detected pose!', block_id, serial_no, X_CO)
+            self.callback(block_id, serial_no, X_CO)
 
 def main():
     #if len(rs.context().devices):
