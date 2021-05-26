@@ -22,7 +22,6 @@ def get_custom_intrinsics(camera_name):
               [  0.        ,   0.        ,   1.        ]])
 
         dist = np.array([[0.104545, -0.148822, 0.000863, 0.003670, 0.000000]])
-        return None
     else:
         raise NotImplementedError()
     return mtx, dist
