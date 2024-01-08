@@ -142,6 +142,6 @@ class BlockPoseServer:
         self.block_poses[topic].append(T)
 
 if __name__ == '__main__':
-    bps = BlockPoseServer(world_camera_names=['A', 'B'],
+    bps = BlockPoseServer(world_camera_names=[],
                           wrist_camera_names=['C'])
     rospy.spin()

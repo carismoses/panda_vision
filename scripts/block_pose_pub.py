@@ -14,7 +14,8 @@ from rotation_util import *
 from cal import get_custom_intrinsics
 
 # map from camera serial no to camera ID
-camera_lookup = {'032622074588':'A', '028522072401':'B', '032622073024': 'C'}
+# camera_lookup = {'032622074588':'A', '028522072401':'B', '032622073024': 'C'}
+camera_lookup = {'231122071284': 'C'}
 
 class BlockPosePublisher:
 
@@ -41,10 +42,12 @@ class BlockPosePublisher:
             min_tags = 1
             if camera_lookup[serial_number] == 'C':
                 min_tags = 1
+            print('With viz')
             bpe = BlockPoseEst(self.publish_callback,
                                serial_number=serial_number,
                                intrinsics=get_custom_intrinsics(camera_lookup[serial_number]),
-                               min_tags=min_tags)
+                               min_tags=min_tags,
+                               vis=True)
             self.bpes.append(bpe)
 
     def publish_callback(self, block_id, camera_serial_no, X_CO):
